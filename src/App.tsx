@@ -209,7 +209,7 @@ export default function App() {
             <div className="flex justify-between items-center mb-12">
                 <button onClick={handleLogoClick} className="flex items-center gap-3 hover:opacity-80 transition-opacity text-left">
                 <img src="/logo.svg" alt="BRC Hub Icon" className="h-10 w-auto" />
-                <span className="text-2xl font-extrabold tracking-tight">BRC <span className="text-orange-600 dark:text-orange-500 font-light">HUB</span></span>
+                <span className="text-2xl font-extrabold tracking-tight">BRC <span className="text-orange-600 dark:text-orange-500 font-light">HUB LLP</span></span>
                 </button>
                 <ThemeToggle />
             </div>
@@ -253,7 +253,7 @@ export default function App() {
                 <div className="flex justify-between items-center w-full mb-10 lg:hidden">
                   <button onClick={handleLogoClick} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                      <img src="/logo.svg" alt="BRC Hub Icon" className="h-8 w-auto" />
-                     <span className="text-xl font-extrabold tracking-tight text-gray-900 dark:text-white transition-colors">BRC <span className="text-orange-600 dark:text-orange-500 font-light">HUB</span></span>
+                     <span className="text-xl font-extrabold tracking-tight text-gray-900 dark:text-white transition-colors">BRC <span className="text-orange-600 dark:text-orange-500 font-light">HUB LLP</span></span>
                   </button>
                 </div>
                 <h1 className="text-4xl md:text-5xl font-black mb-5 tracking-tighter">Welcome to the team.</h1>
