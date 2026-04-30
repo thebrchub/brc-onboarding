@@ -2,13 +2,36 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- Updated to use your new logo as the browser tab icon -->
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Secure employee onboarding portal for BRC HUB LLP." />
+    <meta name="description" content="Secure onboarding portal for BRC Hub LLP." />
     
-    <!-- Professional Title -->
     <title>Onboarding Portal | BRC HUB LLP</title>
+
+    <!-- Pre-render Script: Prevents the white "flash" on refresh -->
+    <script>
+  (function() {
+    try {
+      // Check if a theme preference was saved in our onboarding data
+      const savedData = localStorage.getItem('brc_onboarding_data');
+      let isDark = true; // Default to dark for BRC HUB LLP branding
+      
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        // We will store the theme inside this object in the next step
+        if (parsed.theme === 'light') isDark = false;
+      }
+
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        document.documentElement.style.colorScheme = 'dark';
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.style.colorScheme = 'light';
+      }
+    } catch (e) {}
+  })();
+</script>
   </head>
   <body>
     <div id="root"></div>
