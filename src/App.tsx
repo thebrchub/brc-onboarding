@@ -291,7 +291,7 @@ export default function App() {
                     <input required type="text" name="accountHolderName" value={formData.accountHolderName} onChange={handleInputChange} className="w-full bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-neutral-700 text-gray-900 dark:text-white rounded-xl px-4 py-3.5" placeholder="Account Holder Name *" />
                     <input required type="text" minLength={9} maxLength={18} name="bankAccountNumber" value={formData.bankAccountNumber} onChange={handleInputChange} className="w-full bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-neutral-700 text-gray-900 dark:text-white rounded-xl px-4 py-3.5" placeholder="Bank Account Number *" />
                     <input required type="text" name="bankName" value={formData.bankName} onChange={handleInputChange} className="w-full bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-neutral-700 text-gray-900 dark:text-white rounded-xl px-4 py-3.5" placeholder="Bank Name *" />
-                    <input required type="text" minLength={11} maxLength={11} name="ifscCode" value={formData.ifscCode} onChange={handleInputChange} className="w-full bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-neutral-700 text-gray-900 dark:text-white rounded-xl px-4 py-3.5 uppercase" placeholder="IFSC Code *" />
+                    <input required type="text" minLength={11} maxLength={11} name="ifscCode" value={formData.ifscCode} onChange={handleInputChange} className="w-full bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-neutral-700 text-gray-900 dark:text-white rounded-xl px-4 py-3.5 uppercase" placeholder="IFSC Code * (SBIN0001234) " />
                     <input required type="text" name="upiId" value={formData.upiId} onChange={handleInputChange} className="md:col-span-2 w-full bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-neutral-700 text-gray-900 dark:text-white rounded-xl px-4 py-3.5" placeholder="UPI ID * (e.g. username@upi)" />
                   </div>
                 </div>
@@ -305,7 +305,18 @@ export default function App() {
                     {['photo', 'aadhaar', 'pan'].map((type) => (
                       <div key={type} className="group">
                         <label className="block text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">{type} *</label>
-                        <input required type="file" name={type} onChange={handleFileChange} className="w-full text-xs file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-gray-100 dark:file:bg-[#1a1a1a] file:text-orange-600 dark:file:text-orange-500 hover:file:bg-gray-200 dark:hover:file:bg-[#222] border border-dashed border-gray-300 dark:border-neutral-800 hover:border-orange-500/50 rounded-xl p-1.5 bg-white dark:bg-[#111] transition-all cursor-pointer" />
+                        <input 
+                          required 
+                          type="file" 
+                          name={type} 
+                          accept="image/*,application/pdf" // Restricts file picker to images & PDFs
+                          onChange={handleFileChange} 
+                          className="w-full text-xs file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-gray-100 dark:file:bg-[#1a1a1a] file:text-orange-600 dark:file:text-orange-500 hover:file:bg-gray-200 dark:hover:file:bg-[#222] border border-dashed border-gray-300 dark:border-neutral-800 hover:border-orange-500/50 rounded-xl p-1.5 bg-white dark:bg-[#111] transition-all cursor-pointer" 
+                        />
+                        {/* 10MB UI Hint */}
+                        <p className="text-[9px] text-gray-400 dark:text-neutral-500 mt-2 font-medium">
+                          Max upload size: 10MB
+                        </p>
                       </div>
                     ))}
                   </div>
