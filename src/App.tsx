@@ -36,12 +36,44 @@ export default function App() {
     }
   }, [isDarkMode]);
 
+  // ADDED: Strict Real-Time Input Validations
   const handleInputChange = (e: any) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    let { name, value } = e.target;
+
+    // Real-time constraints
+    if (name === 'bankAccountNumber') {
+      value = value.replace(/\D/g, ''); // Strips out anything that is NOT a digit
+    }
+    if (name === 'ifscCode') {
+      value = value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 11); // Alphanumeric, max 11, auto-uppercase
+    }
+    if (name === 'name' || name === 'accountHolderName' || name === 'bankName') {
+      value = value.replace(/[^a-zA-Z\s]/g, ''); // Only allows letters and spaces
+    }
+    if (name === 'upiId') {
+      value = value.toLowerCase().replace(/[^a-z0-9.\-_@]/g, ''); // Basic UPI allowed characters
+    }
+
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleFileChange = (e: any) => {
-    setFiles({ ...files, [e.target.name]: e.target.files[0] });
+    const file = e.target.files[0];
+    if (file) {
+      const maxSizeInBytes = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSizeInBytes) {
+        setStatus({ 
+          loading: false, 
+          message: `The file "${file.name}" exceeds the 10MB limit. Please choose a smaller file.`, 
+          isError: true 
+        });
+        e.target.value = null; 
+        return;
+      }
+      
+      if (status.isError) setStatus({ loading: false, message: '', isError: false });
+      setFiles({ ...files, [e.target.name]: file });
+    }
   };
 
   const handleLogoClick = () => {
@@ -78,7 +110,25 @@ export default function App() {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    setStatus({ loading: true, message: 'Encrypting & Uploading data...', isError: false });
+    
+    // ADDED: Pre-flight Strict Validations
+    const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+    const upiRegex = /^[a-zA-Z0-9.\-_]+@[a-zA-Z]+$/;
+
+    if (formData.bankAccountNumber.length < 9 || formData.bankAccountNumber.length > 18) {
+      setStatus({ loading: false, message: 'Bank Account Number must be between 9 and 18 digits.', isError: true });
+      return;
+    }
+    if (!ifscRegex.test(formData.ifscCode)) {
+      setStatus({ loading: false, message: 'Invalid IFSC Code format. It should be 11 characters (e.g., SBIN0001234).', isError: true });
+      return;
+    }
+    if (!upiRegex.test(formData.upiId)) {
+      setStatus({ loading: false, message: 'Invalid UPI ID format (e.g., username@bank).', isError: true });
+      return;
+    }
+
+    setStatus({ loading: true, message: '', isError: false });
 
     try {
       const photoBase64 = files.photo ? await convertToBase64(files.photo) : '';
@@ -105,7 +155,6 @@ export default function App() {
     }
   };
 
-  // Shared Theme Toggle Component
   const ThemeToggle = () => (
     <button
       onClick={() => setIsDarkMode(!isDarkMode)}
@@ -124,9 +173,7 @@ export default function App() {
     <>
       <div className="min-h-screen bg-gray-50 dark:bg-[#050505] text-gray-900 dark:text-white flex flex-col lg:flex-row font-sans selection:bg-orange-500 selection:text-white transition-colors duration-300">
         
-        {/* LEFT COLUMN: STATIC SIDEBAR (Hidden on Mobile) */}
         <div className="hidden lg:flex flex-col w-[380px] lg:fixed h-screen border-r border-gray-200 dark:border-neutral-800 bg-white dark:bg-[#0a0a0a] relative overflow-hidden shrink-0 transition-colors duration-300 z-10">
-          
           <div className="absolute inset-0 z-0">
             <img 
               src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop" 
@@ -190,15 +237,10 @@ export default function App() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: MAIN CONTENT AREA (Seamless layout, no inner card) */}
         <div className="w-full lg:ml-[380px] flex flex-col p-6 sm:p-10 lg:p-16 min-h-screen transition-colors duration-300">
-          
           <div className="max-w-3xl w-full mx-auto relative"> 
             
-            {/* Header Area */}
             <div className="mb-10 border-b border-gray-200 dark:border-neutral-800 pb-8 transition-colors">
-              
-              {/* MOBILE TOP BAR (Logo + Toggle) */}
               <div className="flex justify-between items-center w-full mb-10 lg:hidden">
                 <button onClick={handleLogoClick} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                    <img src="/logo.svg" alt="BRC HUB LLP Icon" className="h-8 w-auto" />
@@ -207,7 +249,6 @@ export default function App() {
                 <ThemeToggle />
               </div>
 
-              {/* DESKTOP TOP BAR (Toggle Only, sits right above the heading) */}
               <div className="hidden lg:flex justify-end w-full mb-6 absolute -top-4 right-0">
                 <ThemeToggle />
               </div>
@@ -220,7 +261,17 @@ export default function App() {
               </p>
             </div>
 
-            {status.message && (
+            {status.loading && (
+              <div className="p-4 mb-8 rounded-lg border bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900 text-blue-700 dark:text-blue-400 flex items-start sm:items-center gap-3 shadow-sm">
+                <svg className="animate-spin h-5 w-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5 sm:mt-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span className="text-sm">Submitting your details securely. Please wait a minute and <strong>do not refresh the page!</strong></span>
+              </div>
+            )}
+
+            {!status.loading && status.message && (
               <div className={`p-4 mb-8 rounded-lg border ${status.isError ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900 text-red-600 dark:text-red-400' : 'bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-900 text-green-600 dark:text-green-400'}`}>
                 {status.message}
               </div>
@@ -228,7 +279,6 @@ export default function App() {
 
             <form onSubmit={handleSubmit} className="space-y-10 pb-4">
               
-              {/* Step 1: Personal Details */}
               <div className={`space-y-5 transition-opacity duration-300 ${activeStep >= 1 ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
                 <div className="flex items-center gap-3 border-b border-gray-200 dark:border-neutral-800 pb-2 mb-4">
                    <span className="bg-gray-200 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400 w-6 h-6 rounded flex items-center justify-center text-xs font-bold transition-colors">1</span>
@@ -248,7 +298,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Step 2: Bank Details */}
               <div className={`space-y-5 transition-opacity duration-300 ${activeStep >= 2 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
                 <div className="flex items-center gap-3 border-b border-gray-200 dark:border-neutral-800 pb-2 mb-4 mt-6">
                    <span className={`w-6 h-6 rounded flex items-center justify-center text-xs font-bold transition-colors ${activeStep >= 2 ? 'bg-orange-100 dark:bg-orange-600/20 text-orange-600 dark:text-orange-500' : 'bg-gray-200 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400'}`}>2</span>
@@ -262,7 +311,7 @@ export default function App() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-neutral-400 mb-1.5">Bank Account Number *</label>
-                    <input required type="text" name="bankAccountNumber" value={formData.bankAccountNumber} onChange={handleInputChange} 
+                    <input required minLength={9} maxLength={18} type="text" name="bankAccountNumber" value={formData.bankAccountNumber} onChange={handleInputChange} 
                       className="w-full bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-neutral-700 text-gray-900 dark:text-white rounded-xl px-4 py-3.5 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all" />
                   </div>
                   <div>
@@ -272,8 +321,8 @@ export default function App() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-neutral-400 mb-1.5">IFSC Code *</label>
-                    <input required type="text" name="ifscCode" value={formData.ifscCode} onChange={handleInputChange} 
-                      className="w-full bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-neutral-700 text-gray-900 dark:text-white rounded-xl px-4 py-3.5 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all uppercase" />
+                    <input required minLength={11} maxLength={11} type="text" name="ifscCode" value={formData.ifscCode} onChange={handleInputChange} 
+                      className="w-full bg-gray-50 dark:bg-[#0a0a0a] border border-gray-200 dark:border-neutral-700 text-gray-900 dark:text-white rounded-xl px-4 py-3.5 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all uppercase" placeholder="e.g. SBIN0001234" />
                   </div>
                   <div className="md:col-span-2 pt-1">
                     <label className="block text-sm font-medium text-gray-600 dark:text-neutral-400 mb-1.5">UPI ID *</label>
@@ -283,7 +332,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Step 3: Document Uploads */}
               <div key={resetKey} className={`space-y-5 transition-opacity duration-300 ${activeStep >= 3 ? 'opacity-100' : 'opacity-30 pointer-events-none'}`}>
                 <div className="flex items-center gap-3 border-b border-gray-200 dark:border-neutral-800 pb-2 mb-4 mt-6">
                    <span className={`w-6 h-6 rounded flex items-center justify-center text-xs font-bold transition-colors ${activeStep >= 3 ? 'bg-orange-100 dark:bg-orange-600/20 text-orange-600 dark:text-orange-500' : 'bg-gray-200 dark:bg-neutral-800 text-gray-600 dark:text-neutral-400'}`}>3</span>
@@ -308,18 +356,17 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Action Button */}
               <div className="pt-6 mt-8 border-t border-gray-200 dark:border-neutral-800 transition-colors">
                 <button 
                   type="submit" 
                   disabled={status.loading || !isReadyToSubmit}
                   className={`w-full font-extrabold py-4 px-6 rounded-xl transition-all duration-300 flex justify-center items-center gap-2
-                    ${isReadyToSubmit 
+                    ${isReadyToSubmit && !status.loading
                       ? 'bg-gradient-to-r from-orange-600 to-orange-500 text-white shadow-[0_4px_20px_rgba(234,88,12,0.3)] hover:shadow-[0_4px_30px_rgba(234,88,12,0.5)] hover:from-orange-500 hover:to-orange-400 cursor-pointer' 
                       : 'bg-gray-200 dark:bg-[#111] text-gray-400 dark:text-neutral-600 border border-transparent dark:border-neutral-800 cursor-not-allowed'
                     }`}
                 >
-                  {status.loading ? 'Encrypting & Sending...' : (
+                  {status.loading ? 'Processing...' : (
                     <>
                       Complete Onboarding
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path fillRule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clipRule="evenodd" /></svg>
